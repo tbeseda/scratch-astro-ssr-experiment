@@ -1,11 +1,12 @@
+import { Buffer } from "buffer";
 import { promises as fs } from "fs";
-import * as Astro from "@astrojs/compiler";
 import { App } from "@tinyhttp/app";
 import { logger } from "@tinyhttp/logger";
-
+import * as Astro from "@astrojs/compiler";
 import { renderToString, createContext } from "./lib/render-to-string.js";
 
 const app = new App();
+const internalURL = new URL("./node_modules/astro/dist/internal/index.js", import.meta.url).toString();
 
 app
 	.use(logger())
@@ -17,19 +18,17 @@ app
 		const astroOptions = {
 			sourcefile: astroFileUrl.href,
 			sourcemap: false,
-			internalURL: "astro/internal",
+			internalURL,
 		};
-		const pagePath = `./tmp/${page}-${Date.now()}-astro.js`;
 
 		const astroResult = await Astro.transform(astroFile.toString(), astroOptions);
 
-		await fs.writeFile(pagePath, astroResult.code);
-		const { default: Component } = await import(pagePath);
+		const buffer = Buffer.from(astroResult.code);
+		const buffer64 = `data:text/javascript;base64,${buffer.toString("base64")}`;
+		const { default: Component } = await import(buffer64);
 		const html = await renderToString(createContext(), Component, {}, {});
 
 		res.status(200).send(html);
-
-		await fs.rm(pagePath);
 	});
 
 const PORT = 3000;
