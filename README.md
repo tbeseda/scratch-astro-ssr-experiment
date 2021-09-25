@@ -1,3 +1,1 @@
-# node-dymez2
-
-[Edit on StackBlitz ⚡️](https://stackblitz.com/edit/node-dymez2)
+# Toying with Astro's new compiler

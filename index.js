@@ -1,18 +1,23 @@
-import { App } from '@tinyhttp/app';
-import { logger } from '@tinyhttp/logger';
+import { promises as fs } from "fs";
+
+import * as Astro from "@astrojs/compiler";
+import { App } from "@tinyhttp/app";
+import { logger } from "@tinyhttp/logger";
+
+import { renderToString, createContext } from "./lib/render-to-string.js";
 
 const app = new App();
 
 app
-  .use(logger())
-  .get('/', (_, res) => void res.send('<h1>Hello World</h1>'))
-  .get('/page/:page/', (req, res) => {
-    res.status(200).send(`
-    <h1>Some cool page</h1>
-    <h2>URL</h2>
-    ${req.url}
-    <h2>Params</h2>
-    ${JSON.stringify(req.params, null, 2)}
-  `);
-  })
-  .listen(3000);
+	.use(logger())
+	.get("/", (_, res) => void res.send("<h1>Hello World</h1>"))
+	.get("/astro/:page/", (req, res) => {
+		const { page } = req.params;
+		const astroFilePath = new URL(`./views/${page}.astro`, import.meta.url);
+		const astroFile = await fs.readFile(astroFilePath);
+		const astroString = astroFile.toString();
+
+		res.status(200).send(astroString);
+	});
+
+app.listen(3000, () => console.log("Started on http://localhost:3000"));
