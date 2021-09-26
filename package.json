@@ -14,5 +14,11 @@
 	},
 	"devDependencies": {
 		"@types/node": "^16.10.1"
+	},
+	"prettier": {
+		"tabWidth": 2,
+		"useTabs": true,
+		"singleQuote": false,
+		"printWidth": 120
 	}
 }

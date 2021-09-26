@@ -7,21 +7,30 @@ import { renderToString, createContext } from "./lib/render-to-string.js";
 
 const app = new App();
 const internalURL = new URL("./node_modules/astro/dist/internal/index.js", import.meta.url).toString();
+const indexHtml = `
+<h1>Try Astro on the Server</h1>
+<p>This hack doesn't really work, but it's fast!</p>
+<ul>
+	<li><a href="/astro/hello">/astro/hello</a></li>
+	<li><a href="/astro/import">/astro/import</a> broken</li>
+	<li><a href="/astro/fetch">/astro/fetch</a> broken</li>
+</ul>
+`;
 
 app
 	.use(logger())
-	.get("/", (_, res) => void res.send("<h1>Hello World</h1>"))
-	.get("/astro/:page/", async (req, res) => {
-		const { page } = req.params;
-		const astroFileUrl = new URL(`./views/${page}.astro`, import.meta.url);
-		const astroFile = await fs.readFile(astroFileUrl.pathname);
+	.get("/", (_, res) => void res.send(indexHtml))
+	.get("/astro/:view/", async (req, res) => {
+		const { view } = req.params;
+		const viewUrl = new URL(`./views/${view}.astro`, import.meta.url);
+		const viewFile = await fs.readFile(viewUrl.pathname);
 		const astroOptions = {
-			sourcefile: astroFileUrl.href,
+			sourcefile: viewUrl.href,
 			sourcemap: false,
 			internalURL,
 		};
 
-		const astroResult = await Astro.transform(astroFile.toString(), astroOptions);
+		const astroResult = await Astro.transform(viewFile.toString(), astroOptions);
 
 		const buffer = Buffer.from(astroResult.code);
 		const buffer64 = `data:text/javascript;base64,${buffer.toString("base64")}`;
